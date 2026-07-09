@@ -1,4 +1,4 @@
-# 🛡️ AutoOps: AI-Powered Incident Commander
+# AutoOps: AI-Powered Incident Commander
 
 <div align="center">
 
@@ -17,7 +17,7 @@
 
 ---
 
-## ⚡ The Problem
+##  The Problem
 
 When production outages strike, SREs and developers waste critical minutes (often hours) manually jumping between multiple dashboards:
 - Digging through **Prometheus** spikes to find the affected service.
@@ -29,18 +29,18 @@ When production outages strike, SREs and developers waste critical minutes (ofte
 
 ---
 
-## 🌟 Core Features
+##  Core Features
 
-- **🌐 CNCF-Native Ingestion:** Plugs directly into your existing observability stack (Prometheus, Loki, Jaeger, and Kubernetes API).
-- **🧠 LangGraph-Powered Agent:** Implements a state-graph reasoning agent that dynamically executes Prometheus PromQL, Loki LogQL, and trace lookups based on intermediate evidence.
-- **🔍 Log-to-Trace Correlation:** Auto-extracts trace IDs from error logs to map anomalous spans back to corresponding exceptions.
-- **🔒 Local PII Redaction:** High-performance local regex and NER engines sanitize logs (scrubbing emails, tokens, and credentials) before sending prompts to external LLMs.
-- **📊 Interactive Visualizer:** A dark-mode Web UI dashboard showing the exact step-by-step reasoning tree the AI used during its investigation.
-- **🛠️ Actionable Runbooks:** Recommends dry-run commands or config rollbacks for engineers to execute with a single click.
+- ** CNCF-Native Ingestion:** Plugs directly into your existing observability stack (Prometheus, Loki, Jaeger, and Kubernetes API).
+- ** LangGraph-Powered Agent:** Implements a state-graph reasoning agent that dynamically executes Prometheus PromQL, Loki LogQL, and trace lookups based on intermediate evidence.
+- ** Log-to-Trace Correlation:** Auto-extracts trace IDs from error logs to map anomalous spans back to corresponding exceptions.
+- ** Local PII Redaction:** High-performance local regex and NER engines sanitize logs (scrubbing emails, tokens, and credentials) before sending prompts to external LLMs.
+- ** Interactive Visualizer:** A dark-mode Web UI dashboard showing the exact step-by-step reasoning tree the AI used during its investigation.
+- ** Actionable Runbooks:** Recommends dry-run commands or config rollbacks for engineers to execute with a single click.
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 
 ```mermaid
 graph TD
@@ -69,7 +69,7 @@ graph TD
 
 ---
 
-## 🧠 LangGraph Troubleshooting Cycle
+##  LangGraph Troubleshooting Cycle
 
 AutoOps models the troubleshooting journey as a **directed state graph**. When an incident fires, the agent loops iteratively between telemetry query nodes until it reaches a high-confidence diagnosis:
 
@@ -90,7 +90,7 @@ stateDiagram-v2
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Run Locally (Development Mode)
 
@@ -127,7 +127,7 @@ helm install autoops autoops/autoops \
 
 ---
 
-## 🛡️ Security & Privacy First
+##  Security & Privacy First
 
 We understand that logs and trace data are highly sensitive.
 * **No Telemetry Leaves Your VPC:** All raw database queries, log scanning, and trace analysis happen locally inside the AutoOps pod.
@@ -136,7 +136,7 @@ We understand that logs and trace data are highly sensitive.
 
 ---
 
-## 🗺️ Roadmap & Milestones
+##  Roadmap & Milestones
 
 - [ ] **Milestone 1: Telemetry Connectors** (Prometheus PromQL, Loki LogQL, Jaeger REST API).
 - [ ] **Milestone 2: LangGraph Loop** (Troubleshooting state graph, dynamic query tools, local PII engine).
@@ -145,6 +145,6 @@ We understand that logs and trace data are highly sensitive.
 
 ---
 
-## 📄 License
+##  License
 
 Distributed under the Apache 2.0 License. See `LICENSE` for more information.
