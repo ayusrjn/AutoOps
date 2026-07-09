@@ -1,6 +1,6 @@
-# AutoOps: AI-Powered Incident Commander
-
 <div align="center">
+  <img src="media/logo.png" alt="AutoOps Logo" width="200" />
+  <h1>AutoOps: AI-Powered Incident Commander</h1>
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](#)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](#)
