@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.incident import WebhookPayload
 from app.models.incident import Incident
+from app.agent.executor import run_agent
 
 router = APIRouter(
     prefix="/webhook",
@@ -30,7 +31,7 @@ def receive_alert(payload: WebhookPayload, background_tasks: BackgroundTasks, db
     db.commit()
     db.refresh(new_incident)
     
-    # TODO: In Milestone 2, spawn LangGraph background task here
-    # background_tasks.add_task(run_agent, new_incident.id)
+    # Spawn LangGraph background task
+    background_tasks.add_task(run_agent, new_incident.id)
     
     return {"status": "success", "incident_id": new_incident.id}

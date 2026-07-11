@@ -1,4 +1,7 @@
 import re
+import json
+import litellm
+from app.config import settings
 from app.agent.state import IncidentState
 from app.connectors.prometheus import PrometheusConnector
 from app.connectors.loki import LokiConnector
@@ -312,5 +315,146 @@ def correlate_deployments(state: IncidentState) -> dict:
         "deployment_events": mock_deployments,
         "reasoning_history": reasoning_history,
         "current_node": "correlate_deployments"
+    }
+
+def synthesize_root_cause(state: IncidentState) -> dict:
+    """
+    Calls LiteLLM to analyze gathered metrics, logs, and traces.
+    Outputs root cause summary and confidence score.
+    """
+    reasoning_history = state.get("reasoning_history", [])
+    
+    prompt = f"""You are AutoOps, an AI-powered incident commander.
+Analyze the gathered incident telemetry and synthesize the root cause.
+
+Incident Alert Name: {state.get('alert_name')}
+Timestamp: {state.get('timestamp')}
+Target Services: {state.get('target_services')}
+
+Telemetry Gathered:
+- Metrics Data: {state.get('metrics_data')}
+- Logs Data: {state.get('logs_data')}
+- Traces Data: {state.get('traces_data')}
+- Kubernetes Events: {state.get('k8s_events')}
+- Recent Deployment Events: {state.get('deployment_events')}
+
+Provide your analysis in JSON format with the following keys:
+1. "root_cause_summary": A detailed markdown description of what went wrong, including specific evidence from the metrics, logs, and traces.
+2. "confidence_score": A float between 0.0 and 1.0 representing your confidence in this root cause.
+
+Your output must be valid JSON:
+{{
+  "root_cause_summary": "...",
+  "confidence_score": 0.85
+}}
+"""
+    
+    def parse_json_response(content: str) -> dict:
+        content = content.strip()
+        match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+        if match:
+            content = match.group(1)
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            summary_match = re.search(r'"root_cause_summary"\s*:\s*"(.*?)"', content, re.DOTALL)
+            score_match = re.search(r'"confidence_score"\s*:\s*([0-9.]+)', content)
+            
+            summary = summary_match.group(1) if summary_match else content
+            score = float(score_match.group(1)) if score_match else 0.5
+            return {
+                "root_cause_summary": summary,
+                "confidence_score": score
+            }
+
+    try:
+        response = litellm.completion(
+            model=settings.LITELLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        content = response.choices[0].message.content
+        parsed = parse_json_response(content)
+        root_cause_summary = parsed.get("root_cause_summary", "Unknown root cause due to parsing failure.")
+        confidence_score = parsed.get("confidence_score", 0.5)
+    except Exception as e:
+        root_cause_summary = f"Error during root cause synthesis: {e}"
+        confidence_score = 0.0
+        
+    step_summary = f"Synthesized root cause with confidence {confidence_score:.2f}."
+    reasoning_history.append(step_summary)
+    
+    return {
+        "root_cause_summary": root_cause_summary,
+        "confidence_score": confidence_score,
+        "reasoning_history": reasoning_history,
+        "current_node": "synthesize_root_cause"
+    }
+
+def generate_recommendations(state: IncidentState) -> dict:
+    """
+    Calls LiteLLM to output actionable remediation CLI commands or steps.
+    """
+    reasoning_history = state.get("reasoning_history", [])
+    
+    prompt = f"""You are AutoOps, an AI-powered incident commander.
+Based on the identified root cause and the telemetry gathered, generate a list of actionable remediation steps or CLI commands.
+
+Root Cause Analysis:
+{state.get('root_cause_summary')}
+
+Incident Alert Name: {state.get('alert_name')}
+Target Services: {state.get('target_services')}
+
+Telemetry Gathered:
+- Metrics Data: {state.get('metrics_data')}
+- Logs Data: {state.get('logs_data')}
+- Traces Data: {state.get('traces_data')}
+- Kubernetes Events: {state.get('k8s_events')}
+- Recent Deployment Events: {state.get('deployment_events')}
+
+Provide your recommendations in JSON format with a single key "remediation_steps" which is a list of strings. Each string should be a clear, actionable remediation step or a copy-pasteable CLI command (e.g. kubectl command, scaling command, etc.).
+
+Your output must be valid JSON:
+{{
+  "remediation_steps": [
+    "Step/command 1",
+    "Step/command 2"
+  ]
+}}
+"""
+    
+    def parse_remediation_json(content: str) -> dict:
+        content = content.strip()
+        match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+        if match:
+            content = match.group(1)
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            steps = []
+            for line in content.splitlines():
+                line = line.strip().strip('"').strip("'").strip(',').strip('[').strip(']')
+                if line and not line.startswith('{') and not line.startswith('}') and not line.startswith('"remediation_steps"'):
+                    steps.append(line)
+            return {"remediation_steps": steps}
+
+    try:
+        response = litellm.completion(
+            model=settings.LITELLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        content = response.choices[0].message.content
+        parsed = parse_remediation_json(content)
+        remediation_steps = parsed.get("remediation_steps", [])
+    except Exception as e:
+        remediation_steps = [f"Error during recommendation generation: {e}"]
+        
+    step_summary = f"Generated {len(remediation_steps)} remediation recommendations."
+    reasoning_history.append(step_summary)
+    
+    return {
+        "remediation_steps": remediation_steps,
+        "reasoning_history": reasoning_history,
+        "current_node": "generate_recommendations"
     }
 
