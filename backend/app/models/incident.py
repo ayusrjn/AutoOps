@@ -15,3 +15,8 @@ class Incident(Base):
     root_cause_summary = Column(String, nullable=True)
     remediation_steps = Column(JSON, default=list)
     confidence_score = Column(Float, default=0.0)
+    reasoning_history = Column(JSON, default=list)
+    metrics_data = Column(JSON, default=list)
+    logs_data = Column(JSON, default=list)
+    traces_data = Column(JSON, default=list)
+

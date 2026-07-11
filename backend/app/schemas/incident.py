@@ -28,5 +28,10 @@ class IncidentResponse(BaseModel):
     root_cause_summary: Optional[str] = None
     remediation_steps: List[str] = Field(default_factory=list)
     confidence_score: float = 0.0
+    reasoning_history: List[str] = Field(default_factory=list)
+    metrics_data: List[Dict[str, Any]] = Field(default_factory=list)
+    logs_data: List[Dict[str, Any]] = Field(default_factory=list)
+    traces_data: List[Dict[str, Any]] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+

@@ -12,6 +12,9 @@ dependencies = [
     "uvicorn",
     "httpx",
     "prometheus-api-client",
+    "langgraph",
+    "litellm",
+    "langchain-core",
 ]
 
 [build-system]
