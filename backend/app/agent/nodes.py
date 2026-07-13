@@ -65,9 +65,22 @@ def analyze_metrics(state: IncidentState) -> dict:
         
     for service in target_services:
         queries = {
-            "cpu_usage": f'sum(rate(container_cpu_usage_seconds_total{{container=~".*{service}.*"}}[5m]))',
-            "memory_usage": f'sum(container_memory_working_set_bytes{{container=~".*{service}.*"}})',
-            "http_5xx_rate": f'sum(rate(http_requests_total{{container=~".*{service}.*",status=~"5.."}}[5m]))'
+            "cpu_usage": (
+                f'sum(rate(container_cpu_usage_seconds_total{{container=~".*{service}.*"}}[5m])) or '
+                f'sum(rate(container_cpu_usage_seconds_total{{job=~".*{service}.*"}}[5m])) or '
+                f'sum(rate(container_cpu_usage_seconds_total{{app=~".*{service}.*"}}[5m]))'
+            ),
+            "memory_usage": (
+                f'sum(container_memory_working_set_bytes{{container=~".*{service}.*"}}) or '
+                f'sum(container_memory_working_set_bytes{{job=~".*{service}.*"}}) or '
+                f'sum(container_memory_working_set_bytes{{app=~".*{service}.*"}})'
+            ),
+            "http_5xx_rate": (
+                f'sum(rate(http_requests_total{{container=~".*{service}.*",status=~"5.*"}}[5m])) or '
+                f'sum(rate(http_requests_total{{job=~".*{service}.*",status=~"5.*"}}[5m])) or '
+                f'sum(rate(http_requests_total{{app=~".*{service}.*",status=~"5.*"}}[5m])) or '
+                f'sum(rate(http_requests_total{{instance=~".*{service}.*",status=~"5.*"}}[5m]))'
+            )
         }
         
         for metric_name, query in queries.items():
@@ -128,10 +141,12 @@ def check_logs(state: IncidentState) -> dict:
     trace_id_regex = re.compile(r'\b([a-f0-9]{32})\b', re.IGNORECASE)
     
     for service in target_services:
-        # Try a container LogQL first, then fallback to app
+        # Try container LogQL, then fallback to app, job, service_name
         queries = [
             f'{{container=~".*{service}.*"}}',
-            f'{{app=~".*{service}.*"}}'
+            f'{{app=~".*{service}.*"}}',
+            f'{{job=~".*{service}.*"}}',
+            f'{{service_name=~".*{service}.*"}}'
         ]
         
         service_logs = []
